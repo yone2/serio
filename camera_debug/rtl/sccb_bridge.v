@@ -43,8 +43,11 @@ output [7:0] debug_out;
 reg [7:0] r_divcount;
 wire      w_sccb_clken;
 wire      w_sccb_gclk;
-assign w_sccb_clken = (r_divcount == 8'h00) ? 1 : 0;
-cgate01a cgate_sccb(.clk(sccb_clk), .en(w_sccb_clken), .test(1'b0), .gclk(w_sccb_gclk));
+wire      w_sccb_wclken;
+assign w_sccb_clken  = (r_divcount == 8'h00) ? 1 : 0;
+assign w_sccb_wclken = (r_divcount == {1'b0,sccb_div[7:1]}) | w_sccb_clken;
+cgate01a cgate_sccb1(.clk(sccb_clk), .en(w_sccb_clken),  .test(1'b0), .gclk(w_sccb_gclk));
+cgate01a cgate_sccb2(.clk(sccb_clk), .en(w_sccb_wclken), .test(1'b0), .gclk(w_sccb_gwclk));
 
 always @ (posedge sccb_clk or negedge sccb_reset_n)
 	if(~sccb_reset_n) r_divcount <= #`D 8'h01;
@@ -73,8 +76,10 @@ reg [17:0]   r_seq_sio_d_oe;
 wire [17:0]  w_seq_sio_c;
 wire [17:0]  w_seq_sio_d;
 wire [17:0]  w_seq_sio_d_oe;
+wire         w_sio_din;
 assign sio_c = r_sio_c;
 assign sio_d = r_sio_d_oe ? r_sio_d : 1'bz;
+assign w_sio_din = !r_sio_d_oe & sio_d;
 assign pwdn  = 1'b0; // tie down
 reg [2:0]    r_mcmd;
 reg [14:0]   r_maddr;
@@ -111,7 +116,7 @@ assign w_seq_dat_data = {r_mdata[7],r_mdata[7],
 	r_mdata[6],r_mdata[6],r_mdata[5],r_mdata[5],r_mdata[4],r_mdata[4],r_mdata[3],r_mdata[3],
 	r_mdata[2],r_mdata[2],r_mdata[1],r_mdata[1],r_mdata[0],r_mdata[0],2'b11};
 
-function seq_select_clk;
+function [17:0] seq_select_clk;
 	input [2:0] next_state;
 	case(next_state) 
 		P_SCCB_IDLE          : seq_select_clk = P_SEQ_CD_IDLE;
@@ -126,7 +131,7 @@ function seq_select_clk;
 	endcase
 endfunction
 
-function seq_select_dat;
+function [17:0] seq_select_dat;
 	input [2:0] next_state;
 	input [17:0] wrid;
 	input [17:0] rdid;
@@ -145,7 +150,7 @@ function seq_select_dat;
 	endcase
 endfunction
 
-function seq_select_oe;
+function [17:0] seq_select_oe;
 	input [2:0] next_state;
 	case(next_state) 
 		P_SCCB_IDLE          : seq_select_oe  = P_SEQ_OE_START;
@@ -182,7 +187,7 @@ assign w_rd_en = w_mcmd_valid & r_mcmd[1];
 reg  [2:0] r_sccb_next;
 reg        r_update_seq;
 reg  [4:0] r_seq_cnt;
-reg  [7:0] r_read_data;
+reg  [8:0] r_read_data;
 wire [4:0] w_seq_cnt_done;
 assign w_seq_cnt_done = (r_seq_cnt == 5'd17);
 
@@ -226,7 +231,7 @@ always @ (posedge w_sccb_gclk or negedge sccb_reset_n)
 			r_sccb_next  <= #`D P_SCCB_SENDING_STOP;
 			r_sccb_state <= #`D w_seq_cnt_done ? P_SCCB_SENDING_STOP  : r_sccb_state;
 			r_sresp      <= #`D w_seq_cnt_done ? 2'b01 : 2'b00; // DVA
-			r_sdata      <= #`D w_seq_cnt_done ? r_read_data : r_sdata;
+			r_sdata      <= #`D w_seq_cnt_done ? r_read_data[8:1] : r_sdata;
 		end else if(r_sccb_state == P_SCCB_SENDING_STOP) begin
 			r_sccb_next  <= #`D P_SCCB_IDLE;
 			r_sccb_state <= #`D w_seq_cnt_done ? P_SCCB_IDLE          : r_sccb_state;
@@ -237,23 +242,26 @@ always @ (posedge w_sccb_gclk or negedge sccb_reset_n)
 
 always @ (posedge w_sccb_gclk or negedge sccb_reset_n) 
 	if(~sccb_reset_n) begin
-		r_sio_c        <= #`D 1'b1;
 		r_sio_c_pre    <= #`D 1'b1;
 		r_sio_d        <= #`D 1'b1;
 		r_sio_d_oe     <= #`D 1'b0;
 		r_seq_sio_c    <= #`D 18'd0;
 		r_seq_sio_d    <= #`D 18'd0;
 		r_seq_sio_d_oe <= #`D 18'd0;
-		r_read_data    <= #`D 8'h00;
+		r_read_data    <= #`D 9'h000;
 	end else begin
-		r_sio_c        <= #`D r_sio_c_pre;
-		r_sio_c_pre    <= #`D r_update_seq ? 1'b1 : r_seq_sio_c[149];
-		r_sio_d        <= #`D r_update_seq ? 1'b1 : r_seq_sio_d[149];
-		r_sio_d_oe     <= #`D r_update_seq ? 1'b1 : r_seq_sio_d_oe[149];
+		r_sio_c_pre    <= #`D r_seq_sio_c[17];
+		r_sio_d        <= #`D r_seq_sio_d[17];
+		r_sio_d_oe     <= #`D r_seq_sio_d_oe[17];
 		r_seq_sio_c    <= #`D r_update_seq ? w_seq_sio_c   : {r_seq_sio_c[17:1], 1'b1};
 		r_seq_sio_d    <= #`D r_update_seq ? w_seq_sio_d   : {r_seq_sio_d[17:1], 1'b1};
 		r_seq_sio_d_oe <= #`D r_update_seq ? w_seq_sio_d_oe: {r_seq_sio_d_oe[17:1], 1'b1} ;
+		r_read_data    <= #`D (!r_sio_d_oe & r_sio_c_pre & !r_seq_sio_c[17]) ? {r_read_data[8:1], w_sio_din} : r_read_data;
 	end
+
+always @ (posedge w_sccb_gwclk or negedge sccb_reset_n) 
+	if(~sccb_reset_n) r_sio_c <= #`D 1'b1;
+	else              r_sio_c <= #`D r_sio_c_pre;
 
 
 assign debug_out = {r_sio_c, r_sio_d, r_sio_d_oe, scmdaccept, 2'b00, r_sccb_state};
