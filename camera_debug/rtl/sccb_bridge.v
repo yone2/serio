@@ -44,6 +44,7 @@ reg [7:0] r_divcount;
 wire      w_sccb_clken;
 wire      w_sccb_gclk;
 wire      w_sccb_wclken;
+wire      w_sccb_gwclk;
 assign w_sccb_clken  = (r_divcount == 8'h00) ? 1 : 0;
 assign w_sccb_wclken = (r_divcount == {1'b0,sccb_div[7:1]}) | w_sccb_clken;
 cgate01a cgate_sccb1(.clk(sccb_clk), .en(w_sccb_clken),  .test(1'b0), .gclk(w_sccb_gclk));
@@ -103,12 +104,12 @@ wire [17:0] w_seq_dat_wrid;
 wire [17:0] w_seq_dat_rdid;
 wire [17:0] w_seq_dat_addr;
 wire [17:0] w_seq_dat_data;
-assign w_seq_dat_wrid = {r_maddr[15],r_maddr[15],
-	r_maddr[14],r_maddr[14],r_maddr[13],r_maddr[13],r_maddr[12],r_maddr[12],r_maddr[11],r_maddr[11],
-	r_maddr[10],r_maddr[10],r_maddr[9],r_maddr[9],r_maddr[8],r_maddr[8],2'b00};
-assign w_seq_dat_rdid = {r_maddr[15],r_maddr[15],
-	r_maddr[14],r_maddr[14],r_maddr[13],r_maddr[13],r_maddr[12],r_maddr[12],r_maddr[11],r_maddr[11],
-	r_maddr[10],r_maddr[10],r_maddr[9],r_maddr[9],r_maddr[8],r_maddr[8],2'b11};
+assign w_seq_dat_wrid = {r_maddr[14],r_maddr[14],
+	r_maddr[13],r_maddr[13],r_maddr[12],r_maddr[12],r_maddr[11],r_maddr[11],
+	r_maddr[10],r_maddr[10],r_maddr[9],r_maddr[9],r_maddr[8],r_maddr[8],2'b00,2'b00};
+assign w_seq_dat_rdid = {r_maddr[14],r_maddr[14],
+	r_maddr[13],r_maddr[13],r_maddr[12],r_maddr[12],r_maddr[11],r_maddr[11],
+	r_maddr[10],r_maddr[10],r_maddr[9],r_maddr[9],r_maddr[8],r_maddr[8],2'b11,2'b00};
 assign w_seq_dat_addr = {r_maddr[7],r_maddr[7],
 	r_maddr[6],r_maddr[6],r_maddr[5],r_maddr[5],r_maddr[4],r_maddr[4],r_maddr[3],r_maddr[3],
 	r_maddr[2],r_maddr[2],r_maddr[1],r_maddr[1],r_maddr[0],r_maddr[0],2'b11};

@@ -1,0 +1,14 @@
+../rtl/lib/cgate01a.v
+../rtl/lib/rsclk01a.v
+../rtl/lib/rsrx_01a.v
+../rtl/lib/rstx_01a.v
+../rtl/lib/rsync02a.v
+../rtl/lib/syncd01a.v
+../rtl/lib/trign01a.v
+../rtl/lib/trigp01a.v
+../rtl/clk_reset.v
+../rtl/rsio_01a.v
+../rtl/case_rom.v
+../rtl/sccb_config.v
+../rtl/sccb_bridge.v
+../rtl/top.v

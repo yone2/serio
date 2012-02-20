@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module case_rom(romaddr, t_cmd, t_addr, t_data);
 input  [7:0] romaddr;
 output [1:0] t_cmd;
