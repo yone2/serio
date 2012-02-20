@@ -189,7 +189,7 @@ reg  [2:0] r_sccb_next;
 reg        r_update_seq;
 reg  [4:0] r_seq_cnt;
 reg  [8:0] r_read_data;
-wire [4:0] w_seq_cnt_done;
+wire       w_seq_cnt_done;
 assign w_seq_cnt_done = (r_seq_cnt == 5'd17);
 
 assign w_seq_sio_c = seq_select_clk(r_sccb_next);
@@ -246,18 +246,18 @@ always @ (posedge w_sccb_gclk or negedge sccb_reset_n)
 		r_sio_c_pre    <= #`D 1'b1;
 		r_sio_d        <= #`D 1'b1;
 		r_sio_d_oe     <= #`D 1'b0;
-		r_seq_sio_c    <= #`D 18'd0;
-		r_seq_sio_d    <= #`D 18'd0;
-		r_seq_sio_d_oe <= #`D 18'd0;
+		r_seq_sio_c    <= #`D 18'h3ffff;
+		r_seq_sio_d    <= #`D 18'h3ffff;
+		r_seq_sio_d_oe <= #`D 18'h3ffff;
 		r_read_data    <= #`D 9'h000;
 	end else begin
 		r_sio_c_pre    <= #`D r_seq_sio_c[17];
 		r_sio_d        <= #`D r_seq_sio_d[17];
 		r_sio_d_oe     <= #`D r_seq_sio_d_oe[17];
-		r_seq_sio_c    <= #`D r_update_seq ? w_seq_sio_c   : {r_seq_sio_c[17:1], 1'b1};
-		r_seq_sio_d    <= #`D r_update_seq ? w_seq_sio_d   : {r_seq_sio_d[17:1], 1'b1};
-		r_seq_sio_d_oe <= #`D r_update_seq ? w_seq_sio_d_oe: {r_seq_sio_d_oe[17:1], 1'b1} ;
-		r_read_data    <= #`D (!r_sio_d_oe & r_sio_c_pre & !r_seq_sio_c[17]) ? {r_read_data[8:1], w_sio_din} : r_read_data;
+		r_seq_sio_c    <= #`D r_update_seq ? w_seq_sio_c   : {r_seq_sio_c[16:0], 1'b1};
+		r_seq_sio_d    <= #`D r_update_seq ? w_seq_sio_d   : {r_seq_sio_d[16:0], 1'b1};
+		r_seq_sio_d_oe <= #`D r_update_seq ? w_seq_sio_d_oe: {r_seq_sio_d_oe[16:0], 1'b1} ;
+		r_read_data    <= #`D (!r_sio_d_oe & r_sio_c_pre & !r_seq_sio_c[17]) ? {r_read_data[7:0], w_sio_din} : r_read_data;
 	end
 
 always @ (posedge w_sccb_gwclk or negedge sccb_reset_n) 

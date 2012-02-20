@@ -9,7 +9,7 @@ output [7:0] t_data;
 assign {t_cmd, t_addr, t_data} = rom_table(romaddr);
 
 function [17:0] rom_table;
-	input addr;
+	input [7:0] addr;
 	case (addr)
 	8'h00   : rom_table = 18'h1_01_40;
 	8'h01   : rom_table = 18'h1_02_60;

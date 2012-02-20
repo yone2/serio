@@ -2,7 +2,7 @@
 
 module test_top;
 `define MCLK_HCYCLE 10
-`define SIM_TIME    10000000
+`define SIM_TIME    40000000
 
 reg xipMCLK;
 reg xipRESET;

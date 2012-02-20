@@ -60,7 +60,7 @@ always @ (posedge config_clk or negedge config_reset_n)
 			r_handshake <= #`D (sresp == 2'b01) ? 2'b10 : r_handshake;
 		end else if(r_handshake == 2'b10) begin
 			r_handshake <= #`D 2'b00;
-			r_rom_addr  <= #`D r_rom_addr + 8'h1;
+			r_rom_addr  <= #`D (r_rom_addr == 8'hff) ? r_rom_addr : r_rom_addr + 8'h1;
 		end else if(r_handshake == 2'b11) begin
 			r_handshake <= #`D 2'b00;
 		end
