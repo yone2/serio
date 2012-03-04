@@ -72,6 +72,7 @@ wire       w_readStart;
 wire [7:0] w_readData;
 wire       w_txStatus;
 
+assign xopCAM_XCLK  = w_CamClk;
 assign xonCAM_RESET = w_CamReset_n;
 
 //dump_ctrl dump_ctrl(

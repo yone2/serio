@@ -1,0 +1,10 @@
+
+#Created by Constraints Editor (xc3s200-ft256-4) - 2012/03/04
+NET "xipMCLK" TNM_NET = xipMCLK;
+TIMESPEC TS_xipMCLK = PERIOD "xipMCLK" 20 ns HIGH 50%;
+NET "clk_reset/div2clk1" TNM_NET = clk_reset/div2clk1;
+TIMESPEC TS_clk_reset_div2clk1 = PERIOD "clk_reset/div2clk1" TS_xipMCLK / 2 HIGH 50%;
+NET "sccb_bridge/cgate_sccb1/latched" TNM_NET = sccb_bridge/cgate_sccb1/latched;
+TIMESPEC TS_sccb_bridge_cgate_sccb1_latched = PERIOD "sccb_bridge/cgate_sccb1/latched" TS_clk_reset_div2clk1 HIGH 50%;
+NET "sccb_bridge/cgate_sccb2/latched" TNM_NET = sccb_bridge/cgate_sccb2/latched;
+TIMESPEC TS_sccb_bridge_cgate_sccb2_latched = PERIOD "sccb_bridge/cgate_sccb2/latched" TS_xipMCLK HIGH 50%;

@@ -47,8 +47,18 @@ wire      w_sccb_wclken;
 wire      w_sccb_gwclk;
 assign w_sccb_clken  = (r_divcount == 8'h00) ? 1 : 0;
 assign w_sccb_wclken = (r_divcount == {1'b0,sccb_div[7:1]}) | w_sccb_clken;
-cgate01a cgate_sccb1(.clk(sccb_clk), .en(w_sccb_clken),  .test(1'b0), .gclk(w_sccb_gclk));
-cgate01a cgate_sccb2(.clk(sccb_clk), .en(w_sccb_wclken), .test(1'b0), .gclk(w_sccb_gwclk));
+
+reg r_sccb_clken;
+reg r_sccb_wclken;
+always @ (posedge sccb_clk or negedge sccb_reset_n)
+	if(~sccb_reset_n) r_sccb_clken <= #`D 1'b0;
+	else              r_sccb_clken <= #`D w_sccb_clken;
+always @ (posedge sccb_clk or negedge sccb_reset_n)
+	if(~sccb_reset_n) r_sccb_wclken <= #`D 1'b0;
+	else              r_sccb_wclken <= #`D w_sccb_wclken;	
+
+cgate01a cgate_sccb1(.clk(sccb_clk), .en(r_sccb_clken),  .test(1'b0), .gclk(w_sccb_gclk));
+cgate01a cgate_sccb2(.clk(sccb_clk), .en(r_sccb_wclken), .test(1'b0), .gclk(w_sccb_gwclk));
 
 always @ (posedge sccb_clk or negedge sccb_reset_n)
 	if(~sccb_reset_n) r_divcount <= #`D 8'h01;
