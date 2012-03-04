@@ -3,6 +3,9 @@
 module top (
 	xipMCLK,
 	xipRESET,
+	xonOE, xonWE, xopAddr,
+	xonCE1, xonUB1, xonLB1, xbpDATA1,
+	xonCE2, xonUB2, xonLB2, xbpDATA2,
 	xopCAM_PWDN,
 	xipCAM_VSYNC,
 	xipCAM_HREF,
@@ -18,20 +21,34 @@ module top (
 	xopLD7, xopLD6, xopLD5, xopLD4, xopLD3, xopLD2, xopLD1, xopLD0,
 );
 // System IO
-input       xipMCLK;
-input       xipRESET;
+input       xipMCLK;     // T9
+input       xipRESET;    // L14
+
+// SRAM interface
+output        xonOE;     // K4
+output        xonWE;     // G3
+output [17:0] xopAddr;   // {L3,K5,K3,J3,J4,H4,H3,G5,E4,E3,F4,F3,G4,L4,M3,M4,N3,L5}
+output        xonCE1;    // P7
+output        xonUB1;    // T4
+output        xonLB1;    // P6
+inout  [15:0] xbpDATA1;  // {R1,P1,L2,J2,H1,F2,P8,D3,B1,C1,C2,R5,T5,R6,T8,N7}
+output        xonCE2;    // N5
+output        xonUB2;    // R4
+output        xonLB2;    // P5
+inout  [15:0] xbpDATA2;  // {N1,M1,K2,C3,F5,G1,E2,D2,D1,E1,G2,J1,K1,M2,N2,P2}
 
 // Camera IO
 output      xopCAM_PWDN;
 input       xipCAM_VSYNC;
 input       xipCAM_HREF;
 input       xipCAM_PCLK;
-input       xipCAM_STROBE;
+input       xipCAM_STROBE; // open input (no use)
 output      xopCAM_XCLK;
 output      xonCAM_RESET;
 output      xopCAM_SIO_C;
 inout       xbpCAM_SIO_D;
 input [7:0] xipCAM_D;
+
 // LEDs
 output      xopLD7;    // P11
 output      xopLD6;    // P12
@@ -43,8 +60,8 @@ output      xopLD1;    // P14
 output      xopLD0;    // K12
 
 // RS232C
-output      xopTXD;
-input       xipRXD;
+output      xopTXD;    // R13
+input       xipRXD;    // T13
 
 wire w_RSClk;
 wire w_RSReset_n;
@@ -52,6 +69,7 @@ wire w_SCCBClk;
 wire w_SCCBReset_n;
 wire w_CamClk;
 wire w_CamReset_n;
+wire w_PReset_n;
 
 clk_reset clk_reset(
 	.mclk         (xipMCLK),
@@ -61,7 +79,9 @@ clk_reset clk_reset(
 	.sccb_clk     (w_SCCBClk),
 	.sccb_reset_n (w_SCCBReset_n),
 	.cam_clk      (w_CamClk),
-	.cam_reset_n  (w_CamReset_n)
+	.cam_reset_n  (w_CamReset_n),
+	.pclk         (xipCAM_PCLK),
+	.preset_n     (w_PReset_n)
 );
 
 wire       w_frameStart;
@@ -75,17 +95,29 @@ wire       w_txStatus;
 assign xopCAM_XCLK  = w_CamClk;
 assign xonCAM_RESET = w_CamReset_n;
 
-//dump_ctrl dump_ctrl(
-//	.frameStart(w_frameStart),
-//	.frameEnd  (w_frameEnd),
-//	.writeClk  (xipCAM_PCLK),
-//	.writeEn   (w_writeEn),
-//	.writeData (w_writeData),
-//	.readClk   (w_RSClk),
-//	.readStart (w_readStart),
-//	.readData  (w_readData),
-//	.txStatus  (w_txStatus)
-//);
+assign xipUB1 = 1'b0;
+assign xipLB1 = 1'b0;
+assign xipUB2 = 1'b0;
+assign xipLB2 = 1'b0;
+pixel_buffer pixel_buffer(
+	.writeClk  (xipCAM_PCLK),
+	.writeRst_n(w_PReset_n),
+	.VSYNC     (xipCAM_VSYNC),
+	.HREF      (xipCAM_HREF),
+	.DATA      (xipCAM_D),
+	.readClk   (w_RSClk),
+	.readRst_n (w_RSReset_n),
+	.readData  (w_readData),
+	.txStatus  (w_txStatus),
+	.txStart   (w_readStart),
+	.SRADDR    (xopAddr),
+	.SROE_N    (xonOE),
+	.SRWE_N    (xonWE),
+	.SRCE1_N   (xonCE1),
+	.SRCE2_N   (xonCE2),
+	.SRDATA1   (xbpDATA1),
+	.SRDATA2   (xbpDATA2)
+);
 
 rsio_01a rsio_01a(
 	.pavsv01a2rsio_01aRSClk    (w_RSClk),
